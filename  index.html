@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>產品訂單系統</title>
+<script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.4/dist/opencc.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, sans-serif;}
+body{background:#f5f7fa;padding:16px;font-size:15px;color:#222;}
+h2{margin-bottom:12px;font-size:20px;}
+.block{background:#fff;border-radius:12px;padding:16px;margin-bottom:20px;}
+input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:15px;margin:8px 0;}
+input:focus{outline:none;border-color:#f2b040;}
+.btn{padding:10px 14px;border:none;border-radius:8px;font-size:15px;cursor:pointer;}
+.btn-add{background:#f2b040;color:#fff;width:100%;margin:8px 0;}
+
+/* 分類列表 拖拽排序 + 小按鈕 */
+.category-list{margin-top:10px;}
+.category-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  margin: 4px 0;
+  background: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  touch-action: none;
+}
+.category-name{font-size:14px;color:#222;flex:1;}
+.del-btn {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  padding: 2px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  line-height:1.4;
+}
+
+/* 產品清單樣式 */
+.product-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;border-bottom:1px solid #eee;gap:8px;
+}
+.prod-info{flex:1;}
+.prod-info div:last-child{color:#c0392b;font-weight:bold;margin-top:4px;}
+.edit-btn{background:#f2b040;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:14px;}
+.del-prod-btn{background:#e74c3c;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:14px;}
+
+/* 客戶頁商品 */
+.goods-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;border-bottom:1px solid #eee;gap:8px;
+}
+.add-btn{background:#27ae60;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:14px;}
+
+.tab-wrap{display:flex;gap:6px;margin-bottom:16px;}
+.tab{flex:1;text-align:center;padding:10px;border-radius:8px;background:#eee;cursor:pointer;}
+.tab.active{background:#f2b040;color:#fff;}
+.page{display:none;}
+.page.active{display:block;}
+</style>
+</head>
+<body>
+<div class="tab-wrap">
+  <div class="tab active" data-tab="admin">管理後台</div>
+  <div class="tab" data-tab="customer">客戶下單頁</div>
+</div>
+
+<!-- ========== 管理後台 ========== -->
+<div class="page active" id="page-admin">
+  <div class="block">
+    <h2>+ 新增分類</h2>
+    <input id="newCatInput" placeholder="輸入分類名稱">
+    <button class="btn btn-add" id="addCatBtn">新增分類</button>
+    <div style="margin-top:12px;font-weight:bold;">現有分類列表：</div>
+    <div class="category-list" id="categoryList"></div>
+  </div>
+
+  <div class="block">
+    <h2>產品清單（共 <span id="prodTotal">0</span> 款）</h2>
+    <input type="text" id="searchInput" placeholder="搜產品名稱（簡/繁都可）">
+    <button class="btn btn-add" id="addProdBtn">新增產品</button>
+    <div id="productListWrap"></div>
+  </div>
+</div>
+
+<!-- ========== 客戶下單頁 ========== -->
+<div class="page" id="page-customer">
+  <div class="block">
+    <h2>選購商品</h2>
+    <input type="text" id="customerSearch" placeholder="搜產品（簡/繁都可）">
+    <div id="customerGoodsWrap"></div>
+  </div>
+  <div class="block">
+    <h2>購物清單</h2>
+    <div id="cartWrap"></div>
+    <div style="margin-top:12px;font-weight:bold;">合計：$<span id="cartTotal">0</span></div>
+    <button class="btn btn-add" style="margin-top:10px;" id="submitOrderBtn">提交訂單</button>
+  </div>
+</div>
+
+<script>
+// 簡繁轉換實例
+const convS2T = opencc.Converter('cn','tw');
+const convT2S = opencc.Converter('tw','cn');
+
+// ========== 數據讀取初始化 ==========
+let categoryList = JSON.parse(localStorage.getItem('categorySort')) || [
+  "米類","豆類","麵類","醬油類","蠔油類","調味醬類","辣椒醬類","醋類","香油類","米酒類","罐頭類","酸菜類","如豐醬菜類","腐乳類","雞粉類","調味粉類","生粉類","乾貨類","乾貨甜品类","鮮雞蛋"
+];
+let productData = JSON.parse(localStorage.getItem('productData')) || [];
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+// 標籤切換
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const tid = tab.dataset.tab;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+tid).classList.add('active');
+    if(tid==='customer') renderCustomerGoods();
+  }
+})
+
+// ========== 分類：拖拽排序 + 刪除 + 新增 ==========
+const catWrap = document.getElementById('categoryList');
+function saveCat(){localStorage.setItem('categorySort',JSON.stringify(categoryList));}
+function renderCat(){
+  catWrap.innerHTML='';
+  categoryList.forEach((name,idx)=>{
+    const item = document.createElement('div');
+    item.className = "category-item";
+    item.draggable = true;
+    item.dataset.name = name;
+    item.innerHTML = `
+      <span class="category-name">${name}</span>
+      <button class="del-btn" data-name="${name}">刪除</button>
+    `;
+    catWrap.appendChild(item);
+  })
+  bindCatDrag();
+  bindCatDel();
+}
+function bindCatDrag(){
+  let dragEl=null;
+  catWrap.querySelectorAll('.category-item').forEach(el=>{
+    el.ondragstart=e=>{dragEl=el;el.style.opacity='0.4';}
+    el.ondragend=()=>{dragEl.style.opacity='1';dragEl=null;}
+    el.ondragover=e=>e.preventDefault();
+    el.ondrop=e=>{
+      e.preventDefault();
+      if(!dragEl || dragEl===el) return;
+      const dn = dragEl.dataset.name, tn = el.dataset.name;
+      const di = categoryList.indexOf(dn), ti = categoryList.indexOf(tn);
+      [categoryList[di],categoryList[ti]] = [categoryList[ti],categoryList[di]];
+      saveCat();renderCat();renderProductList();renderCustomerGoods();
+    }
+  })
+}
+function bindCatDel(){
+  catWrap.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      const n = btn.dataset.name;
+      categoryList = categoryList.filter(x=>x!==n);
+      saveCat();renderCat();renderProductList();renderCustomerGoods();
+    }
+  })
+}
+document.getElementById('addCatBtn').onclick=()=>{
+  const val = document.getElementById('newCatInput').value.trim();
+  if(!val || categoryList.includes(val)) return alert('分類名稱不可空白或重複');
+  categoryList.push(val);saveCat();renderCat();
+  document.getElementById('newCatInput').value='';
+  renderProductList();renderCustomerGoods();
+}
+
+// ========== 管理頁產品清單 + 簡繁搜索 ==========
+const prodWrap = document.getElementById('productListWrap');
+function saveProd(){localStorage.setItem('productData',JSON.stringify(productData));}
+function renderProductList(searchKey=""){
+  let html = '';
+  const keyS = convT2S(searchKey), keyT = convS2T(searchKey);
+  document.getElementById('prodTotal').innerText = productData.length;
+  categoryList.forEach(cat=>{
+    const items = productData.filter(p=>p.cat===cat);
+    if(items.length===0) return;
+    html += `<div style="margin:12px 0;"><div style="background:#f2b040;color:#fff;padding:8px;border-radius:8px;margin-bottom:6px;">${cat}</div>`;
+    items.forEach(p=>{
+      const ns = convT2S(p.name), nt = convS2T(p.name);
+      if(searchKey && !ns.includes(keyS) && !nt.includes(keyT)) return;
+      html += `
+        <div class="product-item">
+          <div class="prod-info">
+            <div>${p.name}<br><span style="color:#777">${p.spec||''}</span></div>
+            <div>$${p.price}</div>
+          </div>
+          <button class="edit-btn" data-id="${p.id}">改</button>
+          <button class="del-prod-btn" data-id="${p.id}">刪</button>
+        </div>
+      `
+    })
+    html += '</div>';
+  })
+  prodWrap.innerHTML = html;
+  bindProdBtn();
+}
+function bindProdBtn(){
+  prodWrap.querySelectorAll('.edit-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      const id = btn.dataset.id;
+      const p = productData.find(x=>x.id===id);
+      const newName = prompt('修改產品名稱',p.name);
+      if(!newName) return;
+      const newSpec = prompt('修改規格',p.spec||'');
+      const newPrice = prompt('修改價格',p.price);
+      if(!isNaN(Number(newPrice))){
+        p.name=newName;p.spec=newSpec;p.price=Number(newPrice);
+        saveProd();renderProductList(document.getElementById('searchInput').value);renderCustomerGoods();
+      }
+    }
+  })
+  prodWrap.querySelectorAll('.del-prod-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      const id = btn.dataset.id;
+      productData = productData.filter(x=>x.id!==id);
+      saveProd();renderProductList(document.getElementById('searchInput').value);renderCustomerGoods();
+    }
+  })
+}
+document.getElementById('searchInput').addEventListener('input',function(){
+  renderProductList(this.value.trim());
+})
+document.getElementById('addProdBtn').onclick=()=>{
+  const cat = prompt('選擇分類：\n'+categoryList.join('、'));
+  if(!cat || !categoryList.includes(cat)) return alert('分類不存在');
+  const name = prompt('產品名稱');
+  if(!name) return;
+  const spec = prompt('規格（可留空）','');
+  const price = prompt('價格');
+  if(isNaN(Number(price))) return alert('價格必須是數字');
+  const newId = Date.now().toString();
+  productData.push({id:newId,cat,name,spec,price:Number(price)});
+  saveProd();renderProductList();renderCustomerGoods();
+}
+
+// ========== 客戶頁商品列表 + 簡繁搜索 ==========
+const custWrap = document.getElementById('customerGoodsWrap');
+const cartWrap = document.getElementById('cartWrap');
+function saveCart(){localStorage.setItem('cart',JSON.stringify(cart));}
+function renderCustomerGoods(searchKey=""){
+  let html='';
+  const keyS = convT2S(searchKey), keyT = convS2T(searchKey);
+  categoryList.forEach(cat=>{
+    const items = productData.filter(p=>p.cat===cat);
+    if(items.length===0) return;
+    html += `<div style="margin:12px 0;"><div style="background:#f2b040;color:#fff;padding:8px;border-radius:8px;margin-bottom:6px;">${cat}</div>`;
+    items.forEach(p=>{
+      const ns = convT2S(p.name), nt = convS2T(p.name);
+      if(searchKey && !ns.includes(keyS) && !nt.includes(keyT)) return;
+      html += `
+        <div class="goods-item">
+          <div>${p.name} ${p.spec||''} $${p.price}</div>
+          <button class="add-btn" data-id="${p.id}">加購</button>
+        </div>
+      `
+    })
+    html += '</div>';
+  })
+  custWrap.innerHTML = html;
+  custWrap.querySelectorAll('.add-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      const pid = btn.dataset.id;
+      const prod = productData.find(x=>x.id===pid);
+      const qty = Number(prompt('數量','1'));
+      if(!qty || isNaN(qty)) return;
+      const exist = cart.find(c=>c.pid===pid);
+      if(exist) exist.qty += qty;
+      else cart.push({pid,qty,name:prod.name,price:prod.price});
+      saveCart();renderCart();
+    }
+  })
+}
+function renderCart(){
+  let html='';
+  let total=0;
+  cart.forEach(c=>{
+    const sub = c.price * c.qty;
+    total += sub;
+    html += `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;">
+      <div>${c.name} × ${c.qty}</div>
+      <div>$${sub}</div>
+      <button style="padding:2px 6px;font-size:11px;background:#e74c3c;color:#fff;border:none;border-radius:4px;" data-pid="${c.pid}">移除</button>
+    </div>`
+  })
+  cartWrap.innerHTML = html || '<div style="color:#777">購物車是空的</div>';
+  document.getElementById('cartTotal').innerText = total;
+  cartWrap.querySelectorAll('button').forEach(b=>{
+    b.onclick=()=>{
+      cart = cart.filter(x=>x.pid!==b.dataset.pid);
+      saveCart();renderCart();
+    }
+  })
+}
+document.getElementById('customerSearch').addEventListener('input',function(){
+  renderCustomerGoods(this.value.trim());
+})
+document.getElementById('submitOrderBtn').onclick=()=>{
+  if(cart.length===0) return alert('購物車是空的！');
+  alert('訂單已送出！\n'+JSON.stringify(cart,null,2));
+  cart=[];saveCart();renderCart();
+}
+
+// 頁面初始渲染
+renderCat();
+renderProductList();
+renderCustomerGoods();
+renderCart();
+</script>
+</body>
+</html>
