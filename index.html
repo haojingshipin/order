@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.4/dist/opencc.min.js"></script>
+<title>瀝景調味品批發 · 線上下單</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;background:#f4f5f7;color:#222;padding-bottom:90px}
+header{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#2c3a4a,#1f2a36);color:#fff;padding:12px 14px}
+header h1{font-size:18px;font-weight:700}
+header .sub{font-size:12px;color:#c9d4de;margin-top:2px}
+.search{margin-top:8px}
+.search input{width:100%;padding:9px 12px;border:none;border-radius:20px;font-size:14px;outline:none}
+.cats{position:sticky;top:0;z-index:40;background:#f4f5f7;padding:10px 10px 6px;display:flex;gap:8px;overflow-x:auto;white-space:nowrap}
+.cats::-webkit-scrollbar{display:none}
+.chip{padding:7px 13px;border-radius:18px;background:#fff;border:1px solid #ddd;font-size:13px;cursor:pointer;flex-shrink:0}
+.chip.on{background:#e8a33d;color:#fff;border-color:#e8a33d;font-weight:700}
+.sec{background:#fff;border-radius:10px;margin:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.sec h2{background:#e8a33d;color:#fff;font-size:15px;padding:9px 14px;font-weight:700}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#eee}
+.card{background:#fff;padding:10px;display:flex;flex-direction:column}
+.card .pic{width:100%;height:110px;object-fit:contain;background:#fafafa;border-radius:8px;margin-bottom:6px;display:block}
+.card .nm{font-size:13px;font-weight:700;line-height:1.35;min-height:35px}
+.card .sp{font-size:12px;color:#666;margin:3px 0}
+.card .pr{font-size:17px;font-weight:800;color:#c0392b}
+.card .pr small{font-size:11px;color:#999;font-weight:400}
+.card .up{font-size:11px;color:#888}
+.step{display:flex;align-items:center;gap:8px;margin-top:8px}
+.step button{width:30px;height:30px;border-radius:50%;border:1px solid #e8a33d;background:#fff;color:#e8a33d;font-size:18px;font-weight:700;cursor:pointer}
+.step button:active{background:#e8a33d;color:#fff}
+.step .q{flex:1;text-align:center;font-size:15px;font-weight:700;min-width:20px}
+.cartbar{position:fixed;bottom:0;left:0;right:0;z-index:60;background:#2c3a4a;color:#fff;display:flex;align-items:center;padding:12px 14px;gap:10px}
+.cartbar .info{flex:1;font-size:13px}
+.cartbar .info b{font-size:17px;color:#ffd27f}
+.cartbar button{background:#e8a33d;border:none;color:#fff;font-size:15px;font-weight:700;padding:11px 22px;border-radius:22px;cursor:pointer}
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:flex-end}
+.mask.show{display:flex}
+.modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:18px 16px 24px}
+.modal h3{font-size:17px;margin-bottom:12px}
+.oline{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-bottom:1px dashed #eee}
+.modal textarea{width:100%;height:70px;border:1px solid #ddd;border-radius:8px;padding:8px;font-size:14px;margin:10px 0;resize:none}
+.btnrow{display:flex;gap:10px}
+.btnrow button{flex:1;padding:12px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer}
+.btnrow .b1{background:#25d366;color:#fff}
+.btnrow .b2{background:#2c3a4a;color:#fff}
+.btnrow .b3{background:#eee;color:#333}
+/* admin */
+.apanel{padding:12px}
+.apanel h3{background:#2c3a4a;color:#fff;padding:10px 14px;font-size:16px}
+.arow{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid #eee;font-size:14px}
+.arow.dragging{opacity:0.4}
+.arow .drag-handle{color:#999;cursor:grab;user-select:none;padding:0 4px}
+.arow .n{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arow .p{color:#c0392b;font-weight:700;width:60px;text-align:right}
+.arow button{padding:6px 10px;border:none;border-radius:6px;font-size:12px;cursor:pointer;flex-shrink:0}
+.arow .e{background:#e8a33d;color:#fff}
+.arow .d{background:#e74c3c;color:#fff}
+.aform{background:#fff;margin:12px;padding:12px;border-radius:10px}
+.aform input,.aform select{width:100%;padding:9px;margin:4px 0;border:1px solid #ccc;border-radius:8px;font-size:14px}
+.aform label{font-size:13px;color:#555;font-weight:700}
+.aform button{width:100%;padding:12px;background:#e8a33d;border:none;color:#fff;font-size:15px;font-weight:700;border-radius:8px;cursor:pointer;margin-top:8px}
+.aset{background:#fff;margin:12px;padding:12px;border-radius:10px;font-size:13px}
+.aset input{width:100%;padding:9px;margin:4px 0;border:1px solid #ccc;border-radius:8px;font-size:14px}
+.aset button{padding:9px 14px;background:#2c3a4a;color:#fff;border:none;border-radius:8px;cursor:pointer;margin:4px 4px 0 0}
+.adminlink{text-align:center;font-size:12px;color:#aaa;padding:14px;cursor:pointer}
+.tip-small{font-size:12px;color:#666;margin:6px 0 10px}
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.8);color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;z-index:200;display:none}
+.hidden{display:none!important}
+@media(min-width:720px){.grid{grid-template-columns:1fr 1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+<script>
+const convS2T = opencc.Converter('cn','tw');
+const convT2S = opencc.Converter('tw','cn');
+
+const DATA_VER=3;
+const DEFAULT_CATS=["米類","豆類","麵類","醬油類","蠔油類","調味醬類","辣椒醬類","醋類","香油類","米酒類","罐頭類","酸菜類","如豐醬菜類","腐乳類","雞粉類","調味粉類","生粉類","乾貨類","乾貨甜品類"];
+const CAT_EMOJI={"米類":"🍚","豆類":"🫘","麵類":"🍜","醬油類":"🍶","蠔油類":"🦪","調味醬類":"🥣","辣椒醬類":"🌶️","醋類":"🍾","香油類":"🫙","米酒類":"🍶","罐頭類":"🥫","酸菜類":"🥬","如豐醬菜類":"🥗","腐乳類":"🧀","雞粉類":"🐔","調味粉類":"🧂","生粉類":"🌾","乾貨類":"🍄","乾貨甜品類":"🍯"};
+
+const DEFAULT_PRODUCTS=[
+["米類","小薏米","30kg",335,"每斤 $6.70",""],["米類","小米","25kg",225,"每斤 $5.40",""],["米類","小西米","25kg",225,"每斤 $5.40",""],["米類","糙米","25kg",185,"每斤 $4.44",""],["米類","紅米","25kg",200,"每斤 $4.80",""],["米類","黑米","25kg",210,"每斤 $5.04",""],["米類","江米（圓粒糯米）","25kg",185,"每斤 $4.44",""],["米類","象牙米","15kg",145,"每斤 $5.80",""],["米類","思粵馬油粘米","5kg*5袋",190,"每斤 $4.56",""],["米類","東北珍珠米","25kg",185,"每斤 $4.44",""],["米類","絲苗米","25kg",195,"每斤 $4.68",""],["米類","一剪梅東北珍珠米","5kg*5袋",190,"每斤 $4.56",""],["米類","泰國糯米","25kg",210,"每斤 $5.04",""],["米類","黑糯米","25kg",245,"每斤 $5.88",""],["米類","五常大米","25kg",215,"每斤 $5.16",""],["米類","油粘米","25kg",190,"每斤 $4.56",""],
+["豆類","綠豆邊（中粒）","25kg",295,"每斤 $7.08",""],["豆類","紅豆","25kg",350,"每斤 $8.40",""],["豆類","綠豆","25kg",360,"每斤 $8.64",""],["豆類","黑豆","25kg",320,"每斤 $7.68",""],["豆類","大黃豆","25kg",210,"每斤 $5.04",""],["豆類","眉豆","25kg",265,"每斤 $6.36",""],["豆類","赤小豆","30kg",320,"每斤 $6.40",""],["豆類","鷹嘴豆","25kg",380,"每斤 $9.12",""],["豆類","腰豆（芸豆）","25kg",275,"每斤 $6.60",""],["豆類","斑馬豆（荷包豆）","25kg",505,"每斤 $12.12",""],["豆類","黑眉豆","25kg",320,"每斤 $7.68",""],["豆類","白芸豆","25kg",575,"每斤 $13.80",""],["豆類","小珠生（小花生）","25kg",340,"每斤 $8.16",""],["豆類","圓花生（中粒花生）","25kg",350,"每斤 $8.40",""],["豆類","提生（大花生米）","25kg",420,"每斤 $10.08",""],["豆類","紅衣花生","25kg",375,"每斤 $9.00",""],["豆類","白芝麻","25kg",425,"每斤 $10.20",""],["豆類","黑芝麻（精）","25kg",635,"每斤 $15.24",""],
+["麵類","營豐淮山麵","4KG",48,"每斤 $7.20",""],["麵類","營豐手拍撈麵","4.2KG",50,"每斤 $7.14",""],["麵類","營豐大碗麵","4.2kg",50,"每斤 $7.14",""],["麵類","營豐紫薯麵","3.6kg",50,"每斤 $8.33",""],["麵類","營豐蔬菜麵","3.9kg",50,"每斤 $7.69",""],["麵類","營豐鵝腸麵","4.1kg",50,"每斤 $7.32",""],["麵類","營豐南瓜麵","3.6kg",50,"每斤 $8.33",""],["麵類","營豐蕎麥麵","3.6kg",50,"每斤 $8.33",""],["麵類","滿姨米排","4KG",52,"每斤 $7.80",""],["麵類","滿姨淮山麵","880G*10袋",160,"每斤 $10.91 / 每袋 $16",""],["麵類","霸王花米粉","3KG",40,"每斤 $8.00",""],["麵類","陳克明細掛麵（900g）","900g*15",140,"每袋 $9.33",""],["麵類","陳克明圓掛麵（900g）","900g*15",140,"每袋 $9.33",""],["麵類","陳克明粗掛麵（900g）","900g*15",140,"每袋 $9.33",""],["麵類","陳克明細掛麵（800g）","800g*15",125,"每袋 $8.33",""],["麵類","陳克明粗掛麵（800g）","800g*15",125,"每袋 $8.33",""],["麵類","陳克明圓掛麵（800g）","800g*15",125,"每袋 $8.33",""],
+["醬油類","廚邦醬油（小）","410ML*12",110,"每瓶 $9.17",""],["醬油類","廚邦醬油（中）","820ML*6",105,"每瓶 $17.5",""],["醬油類","廚邦醬油（大）","1.25L*6",130,"每瓶 $21.67",""],["醬油類","廚邦醬油（超大）","1.63L*6",150,"每瓶 $25",""],["醬油類","味事達味極鮮（大）","1.8L*6",160,"每瓶 $26.67",""],["醬油類","味事達味極鮮（中）","760ML*6",110,"每瓶 $18.33",""],["醬油類","味事達味極鮮（小）","380ML*12",115,"每瓶 $9.58",""],["醬油類","海天金標生抽（小）","500ML*12",110,"每瓶 $9.17",""],["醬油類","海天金標生抽（大）","1.28L*6",115,"每瓶 $19.17",""],["醬油類","海天金標生抽（特大）","1.9L*6",150,"每瓶 $25",""],["醬油類","廚邦蒸魚豉油","420ml*12",100,"每瓶 $8.33",""],["醬油類","海天鹵水汁","230ml*24",120,"每瓶 $5",""],
+["蠔油類","海天上等蠔油（支裝）","1L*12",145,"每瓶 $12.08",""],["蠔油類","廚邦漁女蠔油","700g*12",75,"每瓶 $6.25",""],
+["調味醬類","海天黃豆醬（大）","800g*6",95,"每瓶 $15.83",""],["調味醬類","海天黃豆醬（中）","340g*15",115,"每瓶 $7.67",""],["調味醬類","海天黃豆醬（小）","230g*15",90,"每瓶 $6",""],["調味醬類","普寧豆瓣醬（小）","200g*24",100,"每瓶 $4.17",""],["調味醬類","普寧豆瓣醬（大）","900g*6",65,"每瓶 $10.83",""],["調味醬類","普寧豆瓣醬（超大）","2000g*6",105,"每瓶 $17.5",""],["調味醬類","七半香紅油豆瓣醬","500g*24",150,"每瓶 $6.25",""],["調味醬類","廚邦美味香醬","220g*15",100,"每瓶 $6.67",""],["調味醬類","皇牌沙茶醬","200g*12",90,"每瓶 $7.5",""],["調味醬類","皇牌沙茶王","200g*24",175,"每瓶 $7.29",""],["調味醬類","翠宏紅油拌菜料（小）","200g*12",150,"每瓶 $12.5",""],["調味醬類","翠宏紅油拌菜料（中）","750g*6",190,"每瓶 $31.67",""],["調味醬類","翠宏紅油拌菜料（大）","2.5KG*6",305,"每瓶 $50.83",""],["調味醬類","雀巢鷹唛煉奶350g","350g*48",400,"每瓶 $8.33",""],["調味醬類","綠湖芝麻醬","400g*12",100,"每瓶 $8.33",""],["調味醬類","綠湖花生醬","400g*12",90,"每瓶 $7.5",""],["調味醬類","鴻泰港豐皇甜辣醬","730g*12",110,"每瓶 $9.17",""],["調味醬類","潤禾園甜麵醬300g","300g*24",85,"每瓶 $3.54",""],["調味醬類","盛記番茄沙司500g","500ML*12",100,"每瓶 $8.33",""],["調味醬類","中南鮑魚調味汁","380G*12",105,"每瓶 $8.75",""],
+["辣椒醬類","老乾媽（風味豆豉）","280g*24",245,"每瓶 $10.21",""],["辣椒醬類","老乾媽（雞油）","280g*24",290,"每瓶 $12.08",""],["辣椒醬類","老乾媽（辣三丁）","280g*24",270,"每瓶 $11.25",""],["辣椒醬類","老乾媽（油辣椒）","210g*24",230,"每瓶 $9.58",""],["辣椒醬類","老乾媽（香辣脆）","210g*24",230,"每瓶 $9.58",""],["辣椒醬類","黃明記（原味蒜蓉醬）","320*12",145,"每瓶 $12.08",""],["辣椒醬類","黃明記（香辣蒜蓉醬）","320*12",145,"每瓶 $12.08",""],["辣椒醬類","壇壇鄉剁辣椒（大）","1.15kg*6",120,"每瓶 $20",""],["辣椒醬類","壇壇鄉剁辣椒（中）","425g*12",135,"每瓶 $11.25",""],["辣椒醬類","壇壇鄉剁辣椒（小）","210g*12",85,"每瓶 $7.08",""],["辣椒醬類","壇壇鄉蒸魚椒","280g*12",115,"每瓶 $9.58",""],["辣椒醬類","川南下飯菜","262*12",155,"每瓶 $12.92",""],["辣椒醬類","川南油辣子","262*12",155,"每瓶 $12.92",""],["辣椒醬類","中邦蒜蓉辣椒醬","230G*12",100,"每瓶 $8.33",""],["辣椒醬類","禦廚香特辣王","270G*12",115,"每瓶 $9.58",""],
+["醋類","美味鮮9°米醋","500ML*12",75,"每瓶 $6.25",""],["醋類","厨邦9°米醋","420ml*12",75,"每瓶 $6.25",""],["醋類","錦昆老陳醋","500ML*12",65,"每瓶 $5.42",""],["醋類","致美齋甜醋","630ml*12",145,"每瓶 $12.08",""],["醋類","恒順香醋550ml","550ml*12",85,"每瓶 $7.08",""],["醋類","恒順6度白醋500ml","500ml*12",65,"每瓶 $5.42",""],["醋類","東湖3年陳醋","500ml*12",130,"每瓶 $10.83",""],["醋類","東湖5年老陳醋","500ml*12",185,"每瓶 $15.42",""],["醋類","錦坤涼拌醋420ml","420ml*12",65,"每瓶 $5.42",""],["醋類","海天添丁甜醋4.9L","4.9l*2",125,"每瓶 $62.5",""],
+["香油類","五豐黎紅花椒油（大）","400ML*12",225,"每瓶 $18.75",""],["香油類","五豐黎紅花椒油（中）","330ML*12",190,"每瓶 $15.83",""],["香油類","五豐黎紅花椒油（小）","110ML*25",190,"每瓶 $7.60",""],["香油類","王致和料酒","500ml*15",105,"每瓶 $7",""],["香油類","王致和黃酒","500ml*15",105,"每瓶 $7",""],["香油類","幺麻子藤椒油250ml","250ML*10",150,"每瓶 $15",""],["香油類","錦裕蒜頭油150g","150g*12",85,"每瓶 $7.08",""],
+["米酒類","廣東米酒","610ml*15",87,"每瓶 $5.8",""],["米酒類","石灣玉冰燒","610ml*12",165,"每瓶 $13.75",""],["米酒類","紅荔牌紅米酒","610ml*12",175,"每瓶 $14.58",""],["米酒類","張裕金獎白蘭地","750ml*6",245,"每瓶 $40.83",""],["米酒類","張裕三星金獎白蘭地","700ml*6",285,"每瓶 $47.50",""],["米酒類","米婆婆米酒","900g*6",105,"每瓶 $17.5",""],["米酒類","毛鋪小蕎酒","125ml*24",420,"每瓶 $17.50",""],
+["罐頭類","快達牌椰漿165g","165*48",295,"每瓶 $6.15",""],["罐頭類","快達牌椰漿400g","400g*24",280,"每瓶 $11.67",""],["罐頭類","甘竹牌豆豉鯪魚227G","227G*25",340,"每瓶 $13.6",""],["罐頭類","珠江豆豉鯪魚184G","187G*24",275,"每瓶 $11.46",""],["罐頭類","珠江豆豉鯪魚207G","207*24",295,"每瓶 $12.29",""],["罐頭類","古龍五香肉丁142g","142g*24",270,"每瓶 $11.25",""],["罐頭類","永漢鹹魚王","210g*12",155,"每瓶 $12.92",""],
+["酸菜類","偉順澄海酸菜","250g*30",100,"每袋 $3.33",""],["酸菜類","偉順汕頭鹹菜","250g*30",105,"每袋 $3.5",""],["酸菜類","蓬盛橄欖菜（大）","450G*6",75,"每瓶 $12.5",""],["酸菜類","蓬盛橄欖菜（小）","180G*12",75,"每瓶 $6.25",""],["酸菜類","蓬盛蝦仁菜脯","180G*12",75,"每瓶 $6.25",""],["酸菜類","吉香居脆口菜芯","330G*12",135,"每瓶 $11.25",""],["酸菜類","吉香居香辣三絲","330g*12",135,"每瓶 $11.25",""],["酸菜類","吉香居開味酸菜","330g*12",135,"每瓶 $11.25",""],["酸菜類","吉香居爽口下飯菜","330g*12",135,"每瓶 $11.25",""],["酸菜類","吉香居脆口豇豆","330g*12",135,"每瓶 $11.25",""],["酸菜類","吉香居高山小米椒","350g*12",120,"每瓶 $10",""],["酸菜類","地都400G冬菜","400g*6",50,"每瓶 $8.33",""],["酸菜類","三豐雪菜","150g*50",85,"每瓶 $1.7",""],["酸菜類","好甜梅菜（細頭）","15KG",240,"每斤 $9.60",""],["酸菜類","精選甜菜心（細頭）","5KG",85,"每斤 $10.20",""],["酸菜類","自家甜菜菜脯","10KG",165,"每斤 $9.90",""],
+["如豐醬菜類","如豐冰花酸梅醬","430g*12",105,"每瓶 $8.75",""],["如豐醬菜類","如豐原汁酸梅","400g×12",110,"每瓶 $9.17",""],["如豐醬菜類","如豐糖蒜五柳菜","480g*12",125,"每瓶 $10.42",""],["如豐醬菜類","如豐甜酸蘿蔔","380G*12",130,"每瓶 $10.83",""],["如豐醬菜類","如豐薑片","320g*12",105,"每瓶 $8.75",""],["如豐醬菜類","如豐甜酸蕎頭","400g*12",120,"每瓶 $10",""],
+["腐乳類","東古南乳","320g*",105,"",""],["腐乳類","廣合腐乳","300G*36",315,"每瓶 $8.75",""],["腐乳類","浙紹南乳","230g*18",155,"每瓶 $8.61",""],["腐乳類","蓮豐麻辣白腐乳","300g*12",120,"每瓶 $10",""],["腐乳類","蓮豐麻油辣腐乳","300g*12",120,"每瓶 $10",""],
+["雞粉類","廚邦雞粉（小）","140g*12",100,"每袋 $8.33",""],["雞粉類","廚邦雞粉（中）","270g*12",150,"每袋 $12.50",""],["雞粉類","海天鹽焗雞粉","30G*192",205,"每袋 $1.07",""],
+["調味粉類","王守義十三香45g*100盒","45g*100",300,"每瓶 $3",""],["調味粉類","王守義十三香45g*10盒","45g*10",35,"每瓶 $3.5",""],["調味粉類","陶味園味椒鹽50g","50g*48",105,"每瓶 $2.19",""],["調味粉類","陶味園孜然粉18g","18g*48",105,"每瓶 $2.19",""],["調味粉類","陶味園胡椒粉25g","25g*48",105,"每瓶 $2.19",""],["調味粉類","妙多咖喱粉350g","350g*12",180,"每瓶 $15",""],["調味粉類","大潼肉骨茶35g","35g*12",65,"每瓶 $5.42",""],
+["生粉類","五得利小麥粉","2.5kg*10",145,"每袋 $14.50",""],["生粉類","大師傅生粉","198*60",115,"每袋 $1.92",""],["生粉類","魯王餃子粉1kg","1kg*15",125,"每袋 $8.33",""],["生粉類","魯王原味麵粉1kg","1kg*15",125,"每袋 $8.33",""],["生粉類","魯王多用途麵粉1kg","1kg*15",125,"每袋 $8.33",""],
+["乾貨類","鐵棍淮山","3kg",205,"每斤 $41.00",""],["乾貨類","沙參","3kg",235,"每斤 $47.00",""],["乾貨類","雲耳","3kg",245,"每斤 $49.00",""],["乾貨類","靚菜乾","3kg",180,"每斤 $36.00",""],["乾貨類","大粒羅漢果","140粒",215,"",""],["乾貨類","新疆紙皮核桃（箱）","10KG*1",295,"",""],["乾貨類","龍眼乾（箱）","10KG*1",275,"",""],
+["乾貨甜品類","彩田蜂蜜330g","330G*12",105,"每瓶 $8.75",""],["乾貨甜品類","安琪甜酒曲8g","8g*300",160,"每瓶 $0.53",""]
+];
+
+let storedVer=parseInt(localStorage.getItem("lj_ver")||"1");
+let products=JSON.parse(localStorage.getItem("lj_products")||"null");
+let settings=JSON.parse(localStorage.getItem("lj_settings")||"null");
+let customCats=JSON.parse(localStorage.getItem("lj_cats")||"null");
+
+if(!customCats){customCats=[...DEFAULT_CATS];}
+if(!products){
+  products=DEFAULT_PRODUCTS.map((p,i)=>({id:i+1,cat:p[0],name:p[1],spec:p[2],price:p[3],unit:p[4],img:p[5]||""}));
+}
+if(!settings){settings={shop:"瀝景調味品批發",pass:"8888",wa:"85261566793"};}
+
+if(storedVer<DATA_VER){
+  products.forEach(p=>{if(p.img===undefined)p.img="";});
+  localStorage.setItem("lj_ver",DATA_VER);
+}
+
+function save(){
+  localStorage.setItem("lj_products",JSON.stringify(products));
+  localStorage.setItem("lj_settings",JSON.stringify(settings));
+  localStorage.setItem("lj_cats",JSON.stringify(customCats));
+}
+save();
+
+let cart={},curCat="全部",kw="",isAdmin=false,editId=null;
+
+function toast(t){const el=document.getElementById("toast");el.textContent=t;el.style.display="block";setTimeout(()=>el.style.display="none",1500);}
+function cats(){return customCats;}
+function cartCount(){return Object.values(cart).reduce((a,b)=>a+b,0);}
+function cartTotal(){return Object.entries(cart).reduce((s,[id,q])=>{const p=products.find(x=>x.id==id);return p?s+p.price*q:s;},0);}
+function esc(s){return String(s||"").replace(/"/g,"&quot;");}
+
+function render(){
+  const app=document.getElementById("app");
+  if(isAdmin){renderAdmin(app);return;}
+  let h=`<header><h1>${settings.shop} <span style="font-size:12px;color:#ffd27f">線上下單</span></h1>
+  <div class="sub">選好產品數量，按「提交訂單」即可，不用填地址</div>
+  <div class="search"><input id="kw" placeholder="🔍 搜尋產品（簡/繁都可）" value="${kw}" oninput="kw=this.value;renderBody()"></div></header>
+  <div class="cats" id="cats"></div><div id="body"></div>`;
+  app.innerHTML=h;
+  renderBody();
+}
+
+function renderBody(){
+  const list=cats();
+  let chips=["全部",...list].map(c=>`<div class="chip ${c===curCat?"on":""}" onclick="curCat='${c}';render()">${CAT_EMOJI[c]||""}${c}</div>`).join("");
+  document.getElementById("cats").innerHTML=chips;
+  let h="";
+  const show=list.filter(c=>curCat==="全部"||c===curCat);
+  const kwS = convT2S(kw||"");
+  const kwT = convS2T(kw||"");
+  show.forEach(c=>{
+    let items=products.filter(p=>p.cat===c);
+    if(kw){
+      items = items.filter(p=>{
+        const nameS = convT2S(p.name+p.spec);
+        const nameT = convS2T(p.name+p.spec);
+        return nameS.includes(kwS) || nameT.includes(kwT);
+      })
+    }
+    if(!items.length)return;
+    h+=`<div class="sec"><h2>${CAT_EMOJI[c]||""} ${c}</h2><div class="grid">`;
+    items.forEach(p=>{
+      const q=cart[p.id]||0;
+      const pic=p.img?`<img class="pic" src="${esc(p.img)}" loading="lazy" onerror="this.style.display='none'">`:"";
+      h+=`<div class="card">${pic}<div class="nm">${p.name}</div><div class="sp">${p.spec}</div>
+      <div class="pr">$${p.price} <small>/件</small></div><div class="up">${p.unit}</div>
+      <div class="step"><button onclick="chq(${p.id},-1)">−</button><div class="q">${q||""}</div><button onclick="chq(${p.id},1)">＋</button></div></div>`;
+    });
+    h+=`</div></div>`;
+  });
+  if(!h)h="<p style='text-align:center;color:#999;padding:40px'>找不到產品</p>";
+  document.getElementById("body").innerHTML=h+`<div class="adminlink" onclick="adminLogin()">⚙️ 管理入口</div>`;
+  const cc=cartCount(),ct=cartTotal();
+  let cb=document.getElementById("cartbar");
+  if(!cb){cb=document.createElement("div");cb.id="cartbar";cb.className="cartbar";document.body.appendChild(cb);}
+  cb.style.display=cc>0?"flex":"none";
+  cb.innerHTML=`<div class="info">已選 <b>${cc}</b> 件貨 · 合計 <b>$${ct}</b></div><button onclick="checkout()">提交訂單</button>`;
+}
+
+function chq(id,d){cart[id]=Math.max(0,(cart[id]||0)+d);if(!cart[id])delete cart[id];renderBody();}
+function orderText(note){
+  let t=`【${settings.shop} 訂單】\n`,i=1;
+  Object.entries(cart).forEach(([id,q])=>{const p=products.find(x=>x.id==id);
+    t+=`${i++}. ${p.name}（${p.spec}）×${q} = $${p.price*q}\n`;});
+  t+=`----------------\n合計：$${cartTotal()}`;
+  if(note)t+=`\n備註：${note}`;
+  return t;
+}
+
+function checkout(){
+  const cc=cartCount();if(!cc)return;
+  const mask=document.createElement("div");mask.className="mask show";mask.id="mask";
+  let lines=Object.entries(cart).map(([id,q])=>{const p=products.find(x=>x.id==id);
+    return `<div class="oline"><span>${p.name} ×${q}</span><span>$${p.price*q}</span></div>`;}).join("");
+  mask.innerHTML=`<div class="modal"><h3>確認訂單（共 ${cc} 件，合計 $${cartTotal()}）</h3>${lines}
+<div style="color:#c0392b;font-size:13px;padding:6px 0;">
+⚠️iPhone用戶：若點擊後跳出iMessage廣告，代表系統無法喚起WhatsApp，請直接使用【複製訂單】。建議關閉iCloud私密轉送再試。
+</div>
+  <textarea id="note" placeholder="備註（可留空，例如送貨時間）"></textarea>
+  <div class="btnrow">
+    <button class="b1" onclick="sendWA()">WhatsApp 送出</button>
+    <button class="b2" onclick="copyOrder()">複製訂單</button>
+  </div>
+  <div class="btnrow" style="margin-top:10px"><button class="b3" onclick="closeMask()">繼續選購</button></div></div>`;
+  document.body.appendChild(mask);
+}
+function closeMask(){const m=document.getElementById("mask");if(m)m.remove();}
+function copyOrder(){
+  const note=document.getElementById("note").value;
+  navigator.clipboard.writeText(orderText(note)).then(()=>{toast("訂單已複製，可貼到WhatsApp發送");});
+}
+function sendWA(){
+  const note=document.getElementById("note").value;
+  const num=(settings.wa||"").replace(/[^0-9]/g,"");
+  if(!num){
+    toast("老闆還未設定 WhatsApp 號碼，請先複製訂單");
+    return;
+  }
+  const text = encodeURIComponent(orderText(note));
+  const appUrl = `whatsapp://send?phone=${num}&text=${text}`;
+  const webUrl = `https://wa.me/${num}?text=${text}`;
+  window.location.href = appUrl;
+  setTimeout(()=>{
+    toast("未能喚起WhatsApp App，請點【複製訂單】手動發送");
+    window.open(webUrl,"_blank");
+  },400);
+  cart={};closeMask();renderBody();
+}
+
+/* ===== 管理後台 ===== */
+function adminLogin(){
+  const p=prompt("請輸入管理密碼（預設 8888）：");if(p===null)return;
+  if(p===settings.pass){isAdmin=true;render();window.scrollTo(0,0);}else toast("密碼錯誤");
+}
+
+function renderAdmin(app){
+  const list=cats();
+  let h=`<div class="apanel"><h3>⚙️ 產品管理（點下方返回顧客頁）</h3></div>`;
+  h+=`<div class="aform">
+  <b style="font-size:15px">📂分類管理（新增/刪除，左側≡可拖拽調整順序）</b>
+  <div class="tip-small">電腦直接拖拽；手機長按 ≡ 拖動排序，排序自動保存</div>
+  <label>新增分類名稱</label>
+  <input id="new_cat_name" placeholder="例如：零食類">
+  <button onclick="addNewCat()">➕新增分類</button>
+  <div id="adminCatList"></div>
+  </div>`;
+
+  h+=`<div class="aform"><b style="font-size:15px">${editId?"修改產品":"新增產品"}</b>
+  <label>分類</label><select id="f_cat">${list.map(c=>`<option>${c}</option>`).join("")}</select>
+  <label>產品名稱</label><input id="f_name" placeholder="例如：廚邦醬油（小）">
+  <label>規格</label><input id="f_spec" placeholder="例如：410ML*12">
+  <label>價格（$/件）</label><input id="f_price" type="number" placeholder="例如：110">
+  <label>單價說明（可留空）</label><input id="f_unit" placeholder="例如：每瓶 $9.17">
+  <label>圖片（可留空。填 img/檔名.jpg 或圖片網址）</label><input id="f_img" placeholder="例如：img/xxx.jpg">
+  <button onclick="saveForm()">${editId?"保存修改":"＋ 新增產品"}</button>
+  ${editId?`<button style="background:#999" onclick="editId=null;render()">取消修改</button>`:""}</div>`;
+
+  h+=`<div class="aform"><b style="font-size:15px">產品清單（共 ${products.length} 款）</b><br><br>`;
+  list.forEach(c=>{
+    h+=`<div style="background:#e8a33d;color:#fff;padding:5px 10px;border-radius:6px;margin:6px 0 2px;font-size:13px;font-weight:700">${CAT_EMOJI[c]||""} ${c}</div>`;
+    products.filter(p=>p.cat===c).forEach(p=>{
+      h+=`<div class="arow">${p.img?`<img src="${esc(p.img)}" style="width:30px;height:30px;object-fit:contain;border-radius:4px;background:#f4f5f7">`:""}<div class="n">${p.name} <span style="color:#999">${p.spec}</span></div><div class="p">$${p.price}</div>
+      <button class="e" onclick="editProd(${p.id})">改</button><button class="d" onclick="delProd(${p.id})">刪</button></div>`;
+    });
+  });
+  h+=`</div>`;
+
+  h+=`<div class="aset"><b style="font-size:15px">設定</b><br><br>
+  <label>店舖名稱</label><input id="s_shop" value="${settings.shop}"><br>
+  <label>收單 WhatsApp 號碼（區號+號碼，例如 85261566793）</label><input id="s_wa" value="${settings.wa}"><br>
+  <label>管理密碼</label><input id="s_pass" value="${settings.pass}"><br>
+  <button onclick="saveSettings()">保存設定</button>
+  <button onclick="exportData()">備份資料</button>
+  <button onclick="importData()">還原資料</button></div>`;
+
+  h+=`<div class="adminlink" onclick="isAdmin=false;render()">⬅ 返回顧客下單頁</div>`;
+  app.innerHTML=h;
+
+  renderAdminCatList();
+}
+
+function renderAdminCatList(){
+  const wrap=document.getElementById("adminCatList");
+  const list=cats();
+  let html="";
+  list.forEach((cc,i)=>{
+    html+=`<div class="arow" draggable="true" data-idx="${i}">
+      <span class="drag-handle">≡</span>
+      <div class="n">${cc}</div>
+      <button class="d" onclick="delCat(${i})">刪除</button>
+    </div>`;
+  })
+  wrap.innerHTML=html;
+  bindAdminCatDrag();
+}
+
+function bindAdminCatDrag(){
+  const rows=document.querySelectorAll("#adminCatList .arow");
+  rows.forEach(row=>{
+    row.addEventListener("dragstart",e=>{
+      row.classList.add("dragging");
+      e.dataTransfer.setData("idx",row.dataset.idx);
+    })
+    row.addEventListener("dragend",()=>row.classList.remove("dragging"));
+    row.addEventListener("dragover",e=>e.preventDefault());
+    row.addEventListener("drop",e=>{
+      e.preventDefault();
+      const from=Number(e.dataTransfer.getData("idx"));
+      const to=Number(row.dataset.idx);
+      if(from===to) return;
+      const item=customCats.splice(from,1)[0];
+      customCats.splice(to,0,item);
+      save();
+      renderAdminCatList();
+    })
+  })
+}
+
+function addNewCat(){
+  const val=document.getElementById("new_cat_name").value.trim();
+  if(!val){toast("請輸入分類名稱");return;}
+  if(customCats.includes(val)){toast("該分類已經存在");return;}
+  customCats.push(val);
+  save();
+  toast("分類新增成功");
+  document.getElementById("new_cat_name").value="";
+  renderAdminCatList();
+}
+
+function delCat(i){
+  if(!confirm(`確定刪除分類【${customCats[i]}】？注意：該分類下的產品不會被刪除！`))return;
+  customCats.splice(i,1);
+  save();
+  toast("已刪除分類");
+  renderAdminCatList();
+}
+
+function saveForm(){
+  const cat=document.getElementById("f_cat").value,name=document.getElementById("f_name").value.trim(),
+  spec=document.getElementById("f_spec").value.trim(),price=parseFloat(document.getElementById("f_price").value),
+  unit=document.getElementById("f_unit").value.trim(),
+  img=document.getElementById("f_img").value.trim();
+  if(!name||!price){toast("請填名稱和價格");return;}
+  if(editId){const p=products.find(x=>x.id===editId);Object.assign(p,{cat,name,spec,price,unit,img});toast("已修改");}
+  else{products.push({id:Date.now(),cat,name,spec,price,unit,img});toast("已新增");}
+  save();editId=null;render();
+}
+
+function editProd(id){
+  editId=id;const p=products.find(x=>x.id===id);render();
+  setTimeout(()=>{document.getElementById("f_cat").value=p.cat;document.getElementById("f_name").value=p.name;
+  document.getElementById("f_spec").value=p.spec;document.getElementById("f_price").value=p.price;
+  document.getElementById("f_unit").value=p.unit;
+  document.getElementById("f_img").value=p.img||"";window.scrollTo(0,0);},50);
+}
+function delProd(id){if(confirm("確定刪除此產品？")){products=products.filter(p=>p.id!==id);save();render();}}
+function saveSettings(){settings.shop=document.getElementById("s_shop").value;settings.wa=document.getElementById("s_wa").value;settings.pass=document.getElementById("s_pass").value;save();toast("設定已保存");}
+function exportData(){navigator.clipboard.writeText(JSON.stringify({products,settings,customCats})).then(()=>toast("資料已複製，請貼到記事本保存"));}
+function importData(){const t=prompt("請貼上之前備份的資料：");if(!t)return;try{const d=JSON.parse(t);products=d.products;settings=d.settings;customCats=d.customCats;save();render();toast("已還原");}catch(e){toast("資料格式錯誤");}}
+
+render();
+</script>
+</body>
+</html>
